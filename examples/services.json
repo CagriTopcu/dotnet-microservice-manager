@@ -1,0 +1,18 @@
+[
+  {
+    "Category": "Category1",
+    "Name": "ServiceA",
+    "Path": "C:\\Projects\\MyApp\\ServiceA\\ServiceA.csproj",
+    "Port": "http://localhost:5001"
+  },
+  {
+    "Category": "Category1",
+    "Name": "ServiceB",
+    "Path": "C:\\Projects\\MyApp\\ServiceB\\ServiceB.csproj"
+  },
+  {
+    "Category": "Category2",
+    "Name": "ServiceC",
+    "Path": "C:\\Projects\\MyApp\\ServiceC\\ServiceC.csproj"
+  }
+]
