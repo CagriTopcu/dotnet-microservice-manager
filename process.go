@@ -13,6 +13,11 @@ import (
 	"syscall"
 )
 
+// getServiceKey returns a unique key for a service using Category:Name format
+func getServiceKey(service *Service) string {
+	return fmt.Sprintf("%s:%s", service.Category, service.Name)
+}
+
 // ServiceProcess represents a running service process
 type ServiceProcess struct {
 	Service     *Service     // Service information
@@ -43,7 +48,8 @@ func (pm *ProcessManager) StartService(service *Service) error {
 	defer pm.Lock.Unlock()
 
 	// Check if already running
-	if proc, exists := pm.Processes[service.Name]; exists && proc.Running {
+	serviceKey := getServiceKey(service)
+	if proc, exists := pm.Processes[serviceKey]; exists && proc.Running {
 		return fmt.Errorf("service is already running")
 	}
 
@@ -100,7 +106,7 @@ func (pm *ProcessManager) StartService(service *Service) error {
 		Running: false,
 	}
 
-	pm.Processes[service.Name] = proc
+	pm.Processes[serviceKey] = proc
 
 	// Start command
 	if err := cmd.Start(); err != nil {
@@ -137,11 +143,12 @@ func (pm *ProcessManager) StartService(service *Service) error {
 }
 
 // StopService stops a service
-func (pm *ProcessManager) StopService(serviceName string) error {
+func (pm *ProcessManager) StopService(service *Service) error {
 	pm.Lock.Lock()
 	defer pm.Lock.Unlock()
 
-	proc, exists := pm.Processes[serviceName]
+	serviceKey := getServiceKey(service)
+	proc, exists := pm.Processes[serviceKey]
 	if !exists || !proc.Running {
 		return fmt.Errorf("service is not running")
 	}
@@ -151,7 +158,7 @@ func (pm *ProcessManager) StopService(serviceName string) error {
 		if err := proc.Cmd.Process.Kill(); err != nil {
 			return fmt.Errorf("failed to stop service: %v", err)
 		}
-		proc.addLog(fmt.Sprintf("[%s] Stop command sent", serviceName))
+		proc.addLog(fmt.Sprintf("[%s] Stop command sent", service.Name))
 	}
 
 	return nil
@@ -196,7 +203,8 @@ func (pm *ProcessManager) ExecuteDotnetCommand(service *Service, command string)
 
 	// Create or use existing process
 	pm.Lock.Lock()
-	proc, exists := pm.Processes[service.Name]
+	serviceKey := getServiceKey(service)
+	proc, exists := pm.Processes[serviceKey]
 	if !exists {
 		proc = &ServiceProcess{
 			Service: service,
@@ -204,7 +212,7 @@ func (pm *ProcessManager) ExecuteDotnetCommand(service *Service, command string)
 			Logs:    []string{},
 			Running: false,
 		}
-		pm.Processes[service.Name] = proc
+		pm.Processes[serviceKey] = proc
 	}
 	pm.Lock.Unlock()
 
@@ -233,11 +241,12 @@ func (pm *ProcessManager) ExecuteDotnetCommand(service *Service, command string)
 }
 
 // GetServiceStatus returns a service's status
-func (pm *ProcessManager) GetServiceStatus(serviceName string) string {
+func (pm *ProcessManager) GetServiceStatus(service *Service) string {
 	pm.Lock.RLock()
 	defer pm.Lock.RUnlock()
 
-	if proc, exists := pm.Processes[serviceName]; exists {
+	serviceKey := getServiceKey(service)
+	if proc, exists := pm.Processes[serviceKey]; exists {
 		return proc.Status
 	}
 	return "Stopped"
@@ -254,7 +263,8 @@ func (pm *ProcessManager) GetServiceURL(service *Service) string {
 	}
 
 	// Then check for URL detected from logs
-	if proc, exists := pm.Processes[service.Name]; exists {
+	serviceKey := getServiceKey(service)
+	if proc, exists := pm.Processes[serviceKey]; exists {
 		if proc.DetectedURL != "" {
 			return proc.DetectedURL
 		}
@@ -264,11 +274,12 @@ func (pm *ProcessManager) GetServiceURL(service *Service) string {
 }
 
 // GetServiceLogs returns a service's logs
-func (pm *ProcessManager) GetServiceLogs(serviceName string) []string {
+func (pm *ProcessManager) GetServiceLogs(service *Service) []string {
 	pm.Lock.RLock()
 	defer pm.Lock.RUnlock()
 
-	if proc, exists := pm.Processes[serviceName]; exists {
+	serviceKey := getServiceKey(service)
+	if proc, exists := pm.Processes[serviceKey]; exists {
 		proc.LogLock.RLock()
 		defer proc.LogLock.RUnlock()
 

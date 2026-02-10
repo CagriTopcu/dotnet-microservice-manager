@@ -17,11 +17,12 @@ type UI struct {
 	ProcessManager    *ProcessManager
 	CurrentCategory   string
 	ServiceList       *tview.Table
-	LogView           *tview.TextView
-	StatusBar         *tview.TextView
-	HelpText          *tview.TextView
-	CurrentLogService string    // Currently displayed service logs
-	LogUpdateStop     chan bool // Channel to stop log updates
+	LogView              *tview.TextView
+	StatusBar            *tview.TextView
+	HelpText             *tview.TextView
+	CurrentLogService    string    // Currently displayed service name
+	currentLogServiceObj *Service  // Currently displayed service object
+	LogUpdateStop        chan bool // Channel to stop log updates
 }
 
 // NewUI creates a new UI
@@ -220,7 +221,7 @@ func (ui *UI) refreshServiceList() {
 		row := i + 1
 
 		// Status
-		status := ui.ProcessManager.GetServiceStatus(service.Name)
+		status := ui.ProcessManager.GetServiceStatus(&service)
 		statusCell := tview.NewTableCell(ui.getStatusSymbol(status)).
 			SetTextColor(ui.getStatusColor(status)).
 			SetAlign(tview.AlignCenter)
@@ -290,10 +291,10 @@ func (ui *UI) toggleService(index int) {
 	}
 
 	service := services[index]
-	status := ui.ProcessManager.GetServiceStatus(service.Name)
+	status := ui.ProcessManager.GetServiceStatus(&service)
 
 	if status == "Running" || status == "Starting" {
-		ui.ProcessManager.StopService(service.Name)
+		ui.ProcessManager.StopService(&service)
 	} else {
 		ui.ProcessManager.StartService(&service)
 	}
@@ -305,9 +306,9 @@ func (ui *UI) toggleService(index int) {
 func (ui *UI) startAllServices() {
 	services := ui.Config.GetServicesByCategory(ui.CurrentCategory)
 	for _, service := range services {
-		status := ui.ProcessManager.GetServiceStatus(service.Name)
+		svc := service
+		status := ui.ProcessManager.GetServiceStatus(&svc)
 		if status != "Running" && status != "Starting" {
-			svc := service
 			ui.ProcessManager.StartService(&svc)
 		}
 	}
@@ -318,9 +319,10 @@ func (ui *UI) startAllServices() {
 func (ui *UI) stopAllServices() {
 	services := ui.Config.GetServicesByCategory(ui.CurrentCategory)
 	for _, service := range services {
-		status := ui.ProcessManager.GetServiceStatus(service.Name)
+		svc := service
+		status := ui.ProcessManager.GetServiceStatus(&svc)
 		if status == "Running" || status == "Starting" {
-			ui.ProcessManager.StopService(service.Name)
+			ui.ProcessManager.StopService(&svc)
 		}
 	}
 	ui.refreshServiceList()
@@ -356,6 +358,7 @@ func (ui *UI) showLogs(index int) {
 
 	service := services[index]
 	ui.CurrentLogService = service.Name
+	ui.currentLogServiceObj = &service
 
 	// Stop previous log update
 	if ui.LogUpdateStop != nil {
@@ -370,7 +373,7 @@ func (ui *UI) showLogs(index int) {
 	ui.LogUpdateStop = make(chan bool, 1)
 
 	// Set initial logs directly (don't use QueueUpdateDraw)
-	logs := ui.ProcessManager.GetServiceLogs(ui.CurrentLogService)
+	logs := ui.ProcessManager.GetServiceLogs(&service)
 	ui.LogView.SetTitle(fmt.Sprintf(" %s - Logs (Live) ", ui.CurrentLogService)).SetBorder(true)
 
 	var content string
@@ -391,11 +394,11 @@ func (ui *UI) showLogs(index int) {
 
 // updateLogView updates the log view
 func (ui *UI) updateLogView() {
-	if ui.CurrentLogService == "" {
+	if ui.currentLogServiceObj == nil {
 		return
 	}
 
-	logs := ui.ProcessManager.GetServiceLogs(ui.CurrentLogService)
+	logs := ui.ProcessManager.GetServiceLogs(ui.currentLogServiceObj)
 
 	var content string
 	if len(logs) == 0 {
@@ -562,7 +565,8 @@ func (ui *UI) updateStatusBar() {
 		errors := 0
 
 		for _, service := range services {
-			status := ui.ProcessManager.GetServiceStatus(service.Name)
+			svc := service
+			status := ui.ProcessManager.GetServiceStatus(&svc)
 			switch status {
 			case "Running", "Starting":
 				running++
