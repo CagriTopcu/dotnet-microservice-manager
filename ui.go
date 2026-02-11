@@ -23,6 +23,7 @@ type UI struct {
 	CurrentLogService    string    // Currently displayed service name
 	currentLogServiceObj *Service  // Currently displayed service object
 	LogUpdateStop        chan bool // Channel to stop log updates
+	autoScroll           bool      // Auto-scroll to bottom when true
 }
 
 // NewUI creates a new UI
@@ -90,7 +91,7 @@ func (ui *UI) Start() error {
 		SetRows(0, 1).
 		SetColumns(0).
 		AddItem(ui.LogView, 0, 0, 1, 1, 0, 0, true).
-		AddItem(tview.NewTextView().SetText("[yellow]ESC[white]: Go Back").SetTextAlign(tview.AlignCenter), 1, 0, 1, 1, 0, 0, false)
+		AddItem(tview.NewTextView().SetText("ESC: Go Back | End: Jump to Bottom (Auto-scroll) | ↑/↓/PgUp/PgDn: Scroll").SetTextAlign(tview.AlignCenter), 1, 0, 1, 1, 0, 0, false)
 
 	// Add pages
 	ui.Pages.AddPage("main", grid, true, true)
@@ -359,6 +360,7 @@ func (ui *UI) showLogs(index int) {
 	service := services[index]
 	ui.CurrentLogService = service.Name
 	ui.currentLogServiceObj = &service
+	ui.autoScroll = true // Enable auto-scroll for new log view
 
 	// Stop previous log update
 	if ui.LogUpdateStop != nil {
@@ -409,7 +411,10 @@ func (ui *UI) updateLogView() {
 
 	ui.App.QueueUpdateDraw(func() {
 		ui.LogView.SetText(content)
-		ui.LogView.ScrollToEnd()
+		// Only auto-scroll if enabled
+		if ui.autoScroll {
+			ui.LogView.ScrollToEnd()
+		}
 	})
 }
 
