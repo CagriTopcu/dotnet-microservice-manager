@@ -91,7 +91,7 @@ func (ui *UI) Start() error {
 		SetRows(0, 1).
 		SetColumns(0).
 		AddItem(ui.LogView, 0, 0, 1, 1, 0, 0, true).
-		AddItem(tview.NewTextView().SetText("ESC: Go Back | End: Jump to Bottom (Auto-scroll) | ↑/↓/PgUp/PgDn: Scroll").SetTextAlign(tview.AlignCenter), 1, 0, 1, 1, 0, 0, false)
+		AddItem(tview.NewTextView().SetDynamicColors(true).SetText("[yellow]ESC[white]: Go Back | [yellow]End[white]: Jump to Bottom (Auto-scroll) | [yellow]↑/↓/PgUp/PgDn[white]: Scroll").SetTextAlign(tview.AlignCenter), 1, 0, 1, 1, 0, 0, false)
 
 	// Add pages
 	ui.Pages.AddPage("main", grid, true, true)
@@ -193,7 +193,8 @@ func (ui *UI) setupKeyBindings() {
 	})
 
 	ui.LogView.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		if event.Key() == tcell.KeyEscape {
+		switch event.Key() {
+		case tcell.KeyEscape:
 			// Stop log updates
 			if ui.LogUpdateStop != nil {
 				ui.LogUpdateStop <- true
@@ -201,7 +202,18 @@ func (ui *UI) setupKeyBindings() {
 			ui.Pages.SwitchToPage("main")
 			ui.App.SetFocus(ui.ServiceList)
 			return nil
+
+		case tcell.KeyEnd:
+			// Jump to bottom and enable auto-scroll
+			ui.autoScroll = true
+			ui.LogView.ScrollToEnd()
+			return nil
+
+		case tcell.KeyUp, tcell.KeyDown, tcell.KeyPgUp, tcell.KeyPgDn, tcell.KeyHome:
+			// User is manually scrolling, disable auto-scroll
+			ui.autoScroll = false
 		}
+
 		return event
 	})
 }
@@ -385,6 +397,7 @@ func (ui *UI) showLogs(index int) {
 		content = strings.Join(logs, "\n")
 	}
 	ui.LogView.SetText(content)
+	ui.LogView.ScrollToEnd() // Scroll to bottom on initial load
 
 	// Switch to page
 	ui.Pages.SwitchToPage("logs")
