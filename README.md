@@ -90,7 +90,7 @@ On first run, no services will be defined. The application will prompt you to im
 You can add services in two ways:
 
 #### Method 1: Create a JSON File
-```
+```json
 [
   {
     "Category": "Category1",
@@ -133,11 +133,12 @@ Linux/macOS (use forward slashes):
 
 Or use relative paths (relative to where the app runs):
 ```json
-{
-  "Category": "Category1",
-  "Name": "ServiceA",
-  "Path": "../projects/ServiceA"
-} },
+[
+  {
+    "Category": "Category1",
+    "Name": "ServiceA",
+    "Path": "../projects/ServiceA"
+  },
   {
     "Category": "Category2",
     "Name": "ServiceC",
