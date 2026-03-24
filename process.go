@@ -149,9 +149,9 @@ func (pm *ProcessManager) StopService(service *Service) error {
 		return fmt.Errorf("service is not running")
 	}
 
-	// Kill the process
+	// Terminate the process using platform-specific method
 	if proc.Cmd != nil && proc.Cmd.Process != nil {
-		if err := proc.Cmd.Process.Kill(); err != nil {
+		if err := terminateProcess(proc.Cmd.Process); err != nil {
 			return fmt.Errorf("failed to stop service: %v", err)
 		}
 		proc.addLog(fmt.Sprintf("[%s] Stop command sent", service.Name))
@@ -167,7 +167,7 @@ func (pm *ProcessManager) StopAllServices() {
 
 	for _, proc := range pm.Processes {
 		if proc.Running && proc.Cmd != nil && proc.Cmd.Process != nil {
-			proc.Cmd.Process.Kill()
+			terminateProcess(proc.Cmd.Process)
 		}
 	}
 }
