@@ -55,14 +55,8 @@ This will create an executable file named `dotnet-service-manager` (on Windows, 
 
 You can also build for a different OS/architecture:
 
-**Windows:**
 ```bash
-dotnet-service-manager.exe
-```
-
-**Linux/macOS:**
-```bash
-./dotnet-service-managerows)
+# Build for Linux (from Windows)
 GOOS=linux GOARCH=amd64 go build -o dotnet-service-manager
 
 # Build for Windows (from Linux/macOS)
@@ -79,8 +73,14 @@ GOOS=darwin GOARCH=arm64 go build -o dotnet-service-manager
 
 ### First Run
 
+**Windows:**
 ```bash
-./dotnet-service-manager.exe
+dotnet-service-manager.exe
+```
+
+**Linux/macOS:**
+```bash
+./dotnet-service-manager
 ```
 
 On first run, no services will be defined. The application will prompt you to import services.
@@ -90,13 +90,27 @@ On first run, no services will be defined. The application will prompt you to im
 You can add services in two ways:
 
 #### Method 1: Create a JSON File
-
-Create a JSON file with your service definitions:
-
-**services.json**
-```json
+```
 [
   {
+    "Category": "Category1",
+    "Name": "ServiceA",
+    "Path": "C:\\Projects\\MyApp\\ServiceA",
+    "Port": "http://localhost:5001"
+  },
+  {
+    "Category": "Category1",
+    "Name": "ServiceB",
+    "Path": "C:\\Projects\\MyApp\\ServiceB\\ServiceB.csproj"
+  },
+  {
+    "Category": "Category2",
+    "Name": "ServiceC",
+    "Path": "C:\\Projects\\MyApp\\ServiceC"
+  }
+]
+```
+
 **Path Examples:**
 
 Windows (use double backslashes):
@@ -123,17 +137,7 @@ Or use relative paths (relative to where the app runs):
   "Category": "Category1",
   "Name": "ServiceA",
   "Path": "../projects/ServiceA"
-}
-```
-    "Name": "ServiceA",
-    "Path": "C:\\Projects\\MyApp\\ServiceA",
-    "Port": "http://localhost:5001"
-  },
-  {
-    "Category": "Category1",
-    "Name": "ServiceB",
-    "Path": "C:\\Projects\\MyApp\\ServiceB\\ServiceB.csproj"
-  },
+} },
   {
     "Category": "Category2",
     "Name": "ServiceC",
@@ -146,44 +150,18 @@ Or use relative paths (relative to where the app runs):
 - `Category`: Category name for grouping services
 - `Name`: Service display name
 - `Path`: Path to the service directory or `.csproj` file
-- `Port`: (Optional) Service URL - if not specified, will be auto-detected from logs
+#### Method 2: Import via Application
 
-> **Note**: On Windows, use double backslashes `\\` in paths
-    # Application entry point
-├── config.go                # Configuration management (shared)
-├── config_windows.go        # Windows-specific config path
-├── config_unix.go           # Linux/macOS-specific config path
-├── process.go               # Process management (shared)
-├── process_windows.go       # Windows-specific process attributes
-├── process_unix.go          # Linux/macOS-specific process attributes
-├── ui.go                    # Terminal UI (using tview)
-│
-├── go.mod                   # Go module definition
-├── go.sum                   # Go dependency checksums
-│
-├── examples/                # Example JSON files
-│   └── services.json
-│
-└── README.md                # This file
-```
+1. Run the application
+2. Press `I` key
+3. Enter the full path to your JSON file
+4. Press Enter
 
-**Windows:**
-```
-%APPDATA%\dotnet-service-manager\config.json
-```
-Example: `C:\Users\USERNAME\AppData\Roaming\dotnet-service-manager\config.json`
+Your services are now saved and will be loaded automatically on each startup!
 
-**Linux:**
-```
-~/.config/dotnet-service-manager/config.json
-```
-Example: `/home/username/.config/dotnet-service-manager/config.json`
+## ⌨️ Keyboard Shortcuts
 
-**macOS:**
-```
-~/.config/dotnet-service-manager/config.json
-```
-Example: `/Users/username/.config/dotnet-service-manager/ |
+| Key | Description |
 |-----|-------------|
 | **↑/↓** | Navigate between services |
 | **Enter** | Start/Stop selected service |
@@ -204,144 +182,57 @@ Example: `/Users/username/.config/dotnet-service-manager/ |
 ```
 dotnet-service-manager/
 │
-├── main.go              # Application entry point
-├── config.go            # Configuration management
-├── process.go           # Process management and log capture
-├── ui.go                # Terminal UI (using tview)
+├── main.go                  # Application entry point
+├── config.go                # Configuration management (shared)
+├── config_windows.go        # Windows-specific config path
+├── config_unix.go           # Linux/macOS-specific config path
+├── process.go               # Process management (shared)
+├── process_windows.go       # Windows-specific process attributes
+├── process_unix.go          # Linux/macOS-specific process attributes
+├── ui.go                    # Terminal UI (using tview)
 │
-├── go.mod               # Go module definition
-├── go.sum               # Go dependency checksums
+├── go.mod                   # Go module definition
+├── go.sum                   # Go dependency checksums
 │
-├── examples/            # Example JSON files
+├── examples/                # Example JSON files
 │   └── services.json
 │
-└── README.md            # This file
+└── README.md                # This file
 ```
+
+**Platform-Specific Files:**
+- `config_windows.go` / `config_unix.go`: Handle platform-specific config directory locations
+- `process_windows.go` / `process_unix.go`: Handle platform-specific process attributes
+- Files are automatically selected at compile time based on the target OS
 
 ## 📝 Configuration File Location
 
 Your service definitions are stored at:
+
+**Windows:**
 ```
 %APPDATA%\dotnet-service-manager\config.json
 ```
+Example: `C:\Users\USERNAME\AppData\Roaming\dotnet-service-manager\config.json`
+
+**Linux:**
+```
+~/.config/dotnet-service-manager/config.json
+```
+Example: `/home/username/.config/dotnet-service-manager/config.json`
+
+**macOS:**
+```
+~/.config/dotnet-service-manager/config.json
+```
+Example: `/Users/username/.config/dotnet-service-manager/
 
 On Windows, this is typically: `C:\Users\USERNAME\AppData\Roaming\dotnet-service-manager\config.json`
 
-## 🎯 Usage Example
+## 🤝 Contributing
 
-1. **Start the application**:
-   ```bash
-   ./dotnet-service-manager.exe
-   ```
-
-2. **Services are displayed** grouped by category
-
-3. **To start a service**:
-   - Select it with arrow keys
-   - Press Enter
-
-4. **To build a service**:
-   - Select it with arrow keys
-   - Press `B`
-   - Check logs with `L`
-
-5. **To view logs**:
-   - Select service
-   - Press `L`
-   - Logs update automatically in real-time
-   - Press ESC to return
-
-6. **To switch categories**:
-   - Press `Tab`
-
-7. **To start all services in current category**:
-   - Press `A`
-
-8. **To exit**:
-   - Press `Q`
-   - All services are automatically stopped ✅
-
-## 🌐 URL/Port Detection
-
-The application supports two ways to display service URLs:
-
-1. **Manual**: Specify `"Port"` in your JSON file
-2. **Automatic**: Detects URLs from service logs (e.g., "Now listening on: http://localhost:5293")
-
-The URL column will:
-- Show **green** when a URL is detected or configured
-- Show **gray "-"** when no URL is available yet
-
-## 🔨 Build Operations
-
-You can perform common .NET operations on any service:
-
-- **Build** (`B` key): Runs `dotnet build`
-- **Clean** (`C` key): Runs `dotnet clean`
-- **Restore** (`R` key): Runs `dotnet restore`
-
-All operation output is captured and displayed in the service logs. Press `L` to view logs and see build results.
-
-## 🐛 Troubleshooting
-
-### "go: command not found"
-Go is not installed. See installation section.
-
-### "dotnet: command not found"
-.NET SDK is not installed or not in PATH.
-
-### Service won't start
-- Verify the path is correct
-- Check that the directory contains a `.csproj` file
-- Try running `dotnet run` manually in that directory
-
-### Path with spaces
-Make sure to use double backslashes and the full path:
-```json
-"Path": "C:\\Program Files\\My App\\Service"
-```
-
-## 🔧 Development
-
-### Update dependencies
-```bash
-go get -u ./...
-go mod tidy
-```
-
-### Build
-```bash
-go build -o dotnet-service-manager.exe
-```
-
-### Run without building
-```bash
-go run .
-```
-
-## 📚 Code Overview
-
-- **main.go**: Entry point - displays banner, loads config, starts UI
-- **config.go**: Handles JSON file reading/writing, service management
-- **process.go**: Executes `dotnet` commands, captures logs, detects URLs
-- **ui.go**: Creates terminal interface using tview library
-
-## 🙏 Built With
-
-- [tview](https://github.com/rivo/tview) - Terminal UI library (MIT License)
-- [tcell](https://github.com/gdamore/tcell) - Terminal cell-based view (Apache 2.0)
+Contributions are welcome! Feel free to submit issues or pull requests.
 
 ## 📄 License
 
-MIT License - See LICENSE file for details
-
-## 🤝 Contributing
-
-Contributions are welcome! Feel free to:
-- Report bugs
-- Suggest new features
-- Submit pull requests
-
-## 🎉 Happy Coding!
-
-If you have any questions or suggestions, feel free to open an issue!
+This project is licensed under the MIT License - see the LICENSE file for details.
