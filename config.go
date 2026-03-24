@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
 )
 
 // Service holds information for each microservice
@@ -18,24 +17,6 @@ type Service struct {
 // Config holds application configuration
 type Config struct {
 	Services []Service `json:"services"` // List of all services
-}
-
-// getConfigPath returns the configuration file path
-// Uses %APPDATA%\dotnet-service-manager\config.json on Windows
-func getConfigPath() (string, error) {
-	appData := os.Getenv("APPDATA")
-	if appData == "" {
-		return "", fmt.Errorf("APPDATA environment variable not found")
-	}
-
-	configDir := filepath.Join(appData, "dotnet-service-manager")
-
-	// Create folder if it doesn't exist
-	if err := os.MkdirAll(configDir, 0755); err != nil {
-		return "", fmt.Errorf("failed to create config directory: %v", err)
-	}
-
-	return filepath.Join(configDir, "config.json"), nil
 }
 
 // LoadConfig loads configuration from disk

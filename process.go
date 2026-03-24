@@ -10,7 +10,6 @@ import (
 	"regexp"
 	"strings"
 	"sync"
-	"syscall"
 )
 
 // getServiceKey returns a unique key for a service using Category:Name format
@@ -80,11 +79,8 @@ func (pm *ProcessManager) StartService(service *Service) error {
 	// Environment variables for UTF-8 encoding
 	cmd.Env = append(cmd.Environ(), "DOTNET_CLI_UI_LANGUAGE=en-US")
 
-	// UTF-8 console encoding for Windows
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		HideWindow:    false,
-		CreationFlags: 0x08000000, // CREATE_NO_WINDOW
-	}
+	// Configure platform-specific process attributes
+	configureSysProcAttr(cmd)
 
 	// Create stdout and stderr pipes
 	stdout, err := cmd.StdoutPipe()

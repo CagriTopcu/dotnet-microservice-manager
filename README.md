@@ -24,6 +24,11 @@ A terminal-based UI application built with Go that allows you to manage .NET mic
 2. **.NET SDK** - To run your microservices
    - Download: https://dotnet.microsoft.com/download
 
+3. **Supported Operating Systems**:
+   - ✅ Windows (7 and later)
+   - ✅ Linux
+   - ✅ macOS
+
 ## 🛠️ Installation
 
 ### 1. Install Go (if not already installed)
@@ -41,10 +46,34 @@ go version
 git clone <your-repo-url>
 cd dotnet-service-manager
 go mod download
-go build -o dotnet-service-manager.exe
+go build -o dotnet-service-manager
 ```
 
-This will create an executable file named `dotnet-service-manager.exe` (or `dotnet-service-manager` on Linux/Mac).
+This will create an executable file named `dotnet-service-manager` (on Windows, use `dotnet-service-manager.exe`).
+
+**Cross-Platform Building:**
+
+You can also build for a different OS/architecture:
+
+**Windows:**
+```bash
+dotnet-service-manager.exe
+```
+
+**Linux/macOS:**
+```bash
+./dotnet-service-managerows)
+GOOS=linux GOARCH=amd64 go build -o dotnet-service-manager
+
+# Build for Windows (from Linux/macOS)
+GOOS=windows GOARCH=amd64 go build -o dotnet-service-manager.exe
+
+# Build for macOS (Intel)
+GOOS=darwin GOARCH=amd64 go build -o dotnet-service-manager
+
+# Build for macOS (Apple Silicon)
+GOOS=darwin GOARCH=arm64 go build -o dotnet-service-manager
+```
 
 ## 🚀 Usage
 
@@ -68,7 +97,34 @@ Create a JSON file with your service definitions:
 ```json
 [
   {
-    "Category": "Category1",
+**Path Examples:**
+
+Windows (use double backslashes):
+```json
+{
+  "Category": "Category1",
+  "Name": "ServiceA",
+  "Path": "C:\\Projects\\MyApp\\ServiceA\\ServiceA.csproj"
+}
+```
+
+Linux/macOS (use forward slashes):
+```json
+{
+  "Category": "Category1",
+  "Name": "ServiceA",
+  "Path": "/home/user/projects/myapp/ServiceA/ServiceA.csproj"
+}
+```
+
+Or use relative paths (relative to where the app runs):
+```json
+{
+  "Category": "Category1",
+  "Name": "ServiceA",
+  "Path": "../projects/ServiceA"
+}
+```
     "Name": "ServiceA",
     "Path": "C:\\Projects\\MyApp\\ServiceA",
     "Port": "http://localhost:5001"
@@ -93,19 +149,41 @@ Create a JSON file with your service definitions:
 - `Port`: (Optional) Service URL - if not specified, will be auto-detected from logs
 
 > **Note**: On Windows, use double backslashes `\\` in paths
+    # Application entry point
+├── config.go                # Configuration management (shared)
+├── config_windows.go        # Windows-specific config path
+├── config_unix.go           # Linux/macOS-specific config path
+├── process.go               # Process management (shared)
+├── process_windows.go       # Windows-specific process attributes
+├── process_unix.go          # Linux/macOS-specific process attributes
+├── ui.go                    # Terminal UI (using tview)
+│
+├── go.mod                   # Go module definition
+├── go.sum                   # Go dependency checksums
+│
+├── examples/                # Example JSON files
+│   └── services.json
+│
+└── README.md                # This file
+```
 
-#### Method 2: Import via Application
+**Windows:**
+```
+%APPDATA%\dotnet-service-manager\config.json
+```
+Example: `C:\Users\USERNAME\AppData\Roaming\dotnet-service-manager\config.json`
 
-1. Run the application
-2. Press `I` key
-3. Enter the full path to your JSON file
-4. Press Enter
+**Linux:**
+```
+~/.config/dotnet-service-manager/config.json
+```
+Example: `/home/username/.config/dotnet-service-manager/config.json`
 
-Your services are now saved and will be loaded automatically on each startup!
-
-## ⌨️ Keyboard Shortcuts
-
-| Key | Description |
+**macOS:**
+```
+~/.config/dotnet-service-manager/config.json
+```
+Example: `/Users/username/.config/dotnet-service-manager/ |
 |-----|-------------|
 | **↑/↓** | Navigate between services |
 | **Enter** | Start/Stop selected service |
